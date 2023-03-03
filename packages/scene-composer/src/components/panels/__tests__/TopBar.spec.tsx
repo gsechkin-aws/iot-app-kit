@@ -3,26 +3,23 @@ import { render } from '@testing-library/react';
 import wrapper from '@awsui/components-react/test-utils/dom';
 import * as THREE from 'three';
 
-import { TopBar } from '../../../src/components/panels/TopBar';
-import { useStore } from '../../../src/store';
+import { TopBar } from '../TopBar';
+import { useStore } from '../../../store';
 import {
   COMPOSER_FEATURES,
   DEFAULT_CAMERA_OPTIONS,
   DEFAULT_CAMERA_POSITION,
   KnownComponentType,
   setFeatureConfig,
-} from '../../../src';
-import useActiveCamera from '../../../src/hooks/useActiveCamera';
+} from '../../..';
+import useActiveCamera from '../../../hooks/useActiveCamera';
 
 jest.mock('@awsui/components-react', () => ({
   ...jest.requireActual('@awsui/components-react'),
 }));
 
-jest.mock('../../../src/hooks/useActiveCamera', () =>
-  jest.fn().mockReturnValue({ setActiveCameraSettings: jest.fn() }),
-);
+jest.mock('../../../hooks/useActiveCamera', () => jest.fn().mockReturnValue({ setActiveCameraSettings: jest.fn() }));
 
-const toggleMotionIndicatorVisibilityMock = jest.fn();
 const cameraSettings = {
   cameraType: 'Perspective',
   fov: DEFAULT_CAMERA_OPTIONS.fov,
@@ -59,16 +56,10 @@ object3D.rotation.set(0, 0, 0);
 object3D.scale.set(1, 1, 1);
 
 const getObject3DBySceneNodeRef = jest.fn().mockReturnValue(object3D);
-const getComponentRefByType = jest.fn();
 
 const baseState = {
-  noHistoryStates: {
-    motionIndicatorVisible: true,
-    toggleMotionIndicatorVisibility: toggleMotionIndicatorVisibilityMock,
-  },
   getSceneNodeByRef: jest.fn().mockReturnValue(cameraNode),
   getObject3DBySceneNodeRef,
-  getComponentRefByType,
   document: {
     nodeMap: {
       'test-uuid': node,
@@ -77,44 +68,14 @@ const baseState = {
 } as any;
 
 describe('<TopBar />', () => {
-  it('should render with motion indicator off option', () => {
-    getComponentRefByType.mockReturnValue({ type: KnownComponentType.MotionIndicator });
-    useStore('default').setState({
-      ...baseState,
-      noHistoryStates: {
-        motionIndicatorVisible: false,
-      },
-    } as any);
-
-    const { container } = render(<TopBar />);
-    const polarisWrapper = wrapper(container);
-
-    const dropDown = polarisWrapper.findButtonDropdown('[data-testid="view-options"]');
-    dropDown?.openDropdown();
-    const item = dropDown?.findItemById(KnownComponentType.MotionIndicator);
-
-    // has no icon
-    expect(item?.find('svg')).toBeNull();
-  });
-
-  it('should not render without motion indicator or camera view', () => {
-    getComponentRefByType.mockReturnValue({});
+  it('should not render without camera view', () => {
     useStore('default').setState(baseState);
-
-    const { container } = render(<TopBar />);
-    expect(container).toMatchSnapshot();
-  });
-
-  it('should render View Options Drop down with motion indicator', () => {
-    getComponentRefByType.mockReturnValue({ type: KnownComponentType.MotionIndicator });
-    useStore('default').setState({ ...baseState });
 
     const { container } = render(<TopBar />);
     expect(container).toMatchSnapshot();
   });
 
   it('should render Cameras Drop down with camera view', () => {
-    getComponentRefByType.mockReturnValue({});
     const document = {
       nodeMap: {
         'camera-uuid': cameraNode,
@@ -125,45 +86,9 @@ describe('<TopBar />', () => {
 
     const { container } = render(<TopBar />);
     expect(container).toMatchSnapshot();
-  });
-
-  it('should render both drop downs with motion indicator and camera view', () => {
-    getComponentRefByType.mockReturnValue({ type: KnownComponentType.MotionIndicator });
-    const document = {
-      nodeMap: {
-        'camera-uuid': cameraNode,
-      },
-    };
-
-    useStore('default').setState({ ...baseState, document });
-
-    const { container } = render(<TopBar />);
-    expect(container).toMatchSnapshot();
-  });
-
-  it('should toggle motion indicator visibility', () => {
-    getComponentRefByType.mockReturnValue({ type: KnownComponentType.MotionIndicator });
-    useStore('default').setState(baseState);
-
-    const { container } = render(<TopBar />);
-    const polarisWrapper = wrapper(container);
-
-    const dropDown = polarisWrapper.findButtonDropdown('[data-testid="view-options"]');
-    dropDown?.openDropdown();
-    let item = dropDown?.findItemById(KnownComponentType.MotionIndicator);
-
-    // has checked icon
-    expect(item?.find('[data-testid="CheckedIcon"]')).toBeDefined();
-
-    item?.click();
-    dropDown?.openDropdown();
-    item = dropDown?.findItemById(KnownComponentType.MotionIndicator);
-
-    expect(item?.find('svg')).toBeTruthy();
   });
 
   it('should call setActiveCameraSettings when camera clicked', () => {
-    getComponentRefByType.mockReturnValue({});
     const document = {
       nodeMap: {
         'camera-uuid': cameraNode,

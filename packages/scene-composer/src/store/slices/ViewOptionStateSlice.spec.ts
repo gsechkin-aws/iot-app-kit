@@ -1,4 +1,4 @@
-import { createViewOptionStateSlice } from '../../../src/store/slices/ViewOptionStateSlice';
+import { createViewOptionStateSlice } from './ViewOptionStateSlice';
 
 describe('createViewOptionStateSlice', () => {
   it('should be able to change motioon indicator visibility', () => {
@@ -17,5 +17,19 @@ describe('createViewOptionStateSlice', () => {
 
     expect(draft.lastOperation!).toEqual('toggleMotionIndicatorVisibility');
     expect(draft.noHistoryStates.motionIndicatorVisible).toBeFalsy();
+  });
+
+  it('should be able to change tag settings', () => {
+    const draft = { lastOperation: undefined, noHistoryStates: { tagSettings: {} as any } };
+
+    const get = jest.fn();
+    const set = jest.fn(((callback) => callback(draft)) as any);
+
+    const { setTagSettings } = createViewOptionStateSlice(set, get, undefined as any);
+    setTagSettings({ scale: 3.3, autoRescale: true });
+
+    expect(draft.lastOperation!).toEqual('setTagSettings');
+    expect(draft.noHistoryStates.tagSettings.scale).toEqual(3.3);
+    expect(draft.noHistoryStates.tagSettings.autoRescale).toBeTruthy();
   });
 });

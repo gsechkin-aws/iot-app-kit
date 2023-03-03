@@ -1,7 +1,7 @@
-/* eslint-disable import/first */
 import React from 'react';
 import { shallow, configure } from 'enzyme';
 import Adapter from 'enzyme-adapter-react-16';
+import { render } from '@testing-library/react';
 import { Select } from '@awsui/components-react';
 
 import { SettingsPanel } from '..';
@@ -9,23 +9,36 @@ import { ExpandableInfoSection } from '../CommonPanelComponents';
 import { useStore } from '../../../store';
 import { setFeatureConfig } from '../../../common/GlobalSettings';
 import { COMPOSER_FEATURES } from '../../../interfaces';
+import { mockProvider } from '../../../../tests/components/panels/scene-components/MockComponents';
 
-jest.spyOn(React, 'useContext').mockReturnValue('sceneComponserId' as any);
+jest.mock('@awsui/components-react', () => ({
+  ...jest.requireActual('@awsui/components-react'),
+}));
+
+jest.mock('../scene-settings', () => {
+  const originalModule = jest.requireActual('../scene-settings');
+  return {
+    ...originalModule,
+    SceneDataBindingTemplateEditor: 'SceneDataBindingTemplateEditor',
+    SceneTagSettingsEditor: 'SceneTagSettingsEditor',
+  };
+});
 
 configure({ adapter: new Adapter() });
 describe('SettingsPanel contains expected elements.', () => {
-  it('SettingsPanel contains expected elements.', async () => {
+  it('should contains expected elements.', async () => {
     const setSceneProperty = jest.fn();
-    useStore('sceneComponserId').setState({
+    useStore('default').setState({
       setSceneProperty: setSceneProperty,
       getSceneProperty: jest.fn().mockReturnValue('neutral'),
+      isEditing: jest.fn().mockReturnValue(true),
     });
 
     const wrapper = shallow(<SettingsPanel />);
 
     const expandableInfoSection = wrapper.find(ExpandableInfoSection);
-    expect(expandableInfoSection.length).toEqual(1);
-    expect(expandableInfoSection.at(0).props().title).toEqual('Scene Settings');
+    expect(expandableInfoSection.length).toEqual(2);
+    expect(expandableInfoSection.at(1).props().title).toEqual('Scene Settings');
 
     const selectProps = expandableInfoSection.find(Select).props();
 
@@ -45,19 +58,49 @@ describe('SettingsPanel contains expected elements.', () => {
     setSceneProperty.mockReset();
   });
 
-  it('SettingsPanel contains tag settings element.', async () => {
+  it('should contains default elements in editing mode.', async () => {
+    setFeatureConfig({ [COMPOSER_FEATURES.TagResize]: false });
+    const setSceneProperty = jest.fn();
+    useStore('default').setState({
+      setSceneProperty: setSceneProperty,
+      getSceneProperty: jest.fn().mockReturnValue('neutral'),
+      isEditing: jest.fn().mockReturnValue(true),
+    });
+
+    const { queryByText } = render(<SettingsPanel valueDataBindingProvider={mockProvider} />);
+
+    expect(queryByText('Current View Settings')).toBeTruthy();
+    expect(queryByText('Scene Settings')).toBeTruthy();
+    expect(queryByText('Tag Settings')).toBeFalsy();
+    expect(queryByText('Data Binding Template')).toBeTruthy();
+  });
+
+  it('should contains default elements in viewing mode.', async () => {
+    const setSceneProperty = jest.fn();
+    useStore('default').setState({
+      setSceneProperty: setSceneProperty,
+      getSceneProperty: jest.fn().mockReturnValue('neutral'),
+      isEditing: jest.fn().mockReturnValue(false),
+    });
+
+    const { queryByText } = render(<SettingsPanel valueDataBindingProvider={mockProvider} />);
+
+    expect(queryByText('Current View Settings')).toBeTruthy();
+    expect(queryByText('Scene Settings')).toBeFalsy();
+    expect(queryByText('Tag Settings')).toBeFalsy();
+    expect(queryByText('Data Binding Template')).toBeFalsy();
+  });
+
+  it('should contains tag settings element.', async () => {
     setFeatureConfig({ [COMPOSER_FEATURES.TagResize]: true });
     const setSceneProperty = jest.fn();
-    useStore('sceneComponserId').setState({
+    useStore('default').setState({
       setSceneProperty: setSceneProperty,
       getSceneProperty: jest.fn().mockReturnValue('neutral'),
     });
 
-    const wrapper = shallow(<SettingsPanel />);
+    const { queryByText } = render(<SettingsPanel />);
 
-    const expandableInfoSections = wrapper.find(ExpandableInfoSection);
-    expect(expandableInfoSections.length).toEqual(2);
-    expect(expandableInfoSections.at(0).props().title).toEqual('Scene Settings');
-    expect(expandableInfoSections.at(1).props().title).toEqual('Tag Settings');
+    expect(queryByText('Tag Settings')).toBeTruthy();
   });
 });
