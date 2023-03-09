@@ -65,12 +65,15 @@ export class IotStatusGrid {
 
   @Watch('queries')
   @Watch('settings')
-  @Watch('viewport')
   private onPropUpdate() {
     this.provider.unsubscribe();
     this.buildProvider();
   }
 
+  @Watch('viewport')
+  private onViewportUpdate() {
+    this.provider.updateViewport(this.viewport);
+  }
   @Listen('dateRangeChange')
   private handleDateRangeChange({ detail: [start, end] }: { detail: [Date, Date] }) {
     this.provider.updateViewport({ start, end });
@@ -79,6 +82,7 @@ export class IotStatusGrid {
   render() {
     return (
       <iot-time-series-connector
+        initialViewport={this.viewport}
         provider={this.provider}
         styleSettings={this.styleSettings}
         annotations={this.annotations}

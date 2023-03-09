@@ -147,6 +147,7 @@ export namespace Components {
     interface IotTimeSeriesConnector {
         "annotations": Annotations;
         "assignDefaultColors": boolean | undefined;
+        "initialViewport": Viewport;
         "provider": Provider<TimeSeriesData[]>;
         "renderFunc": (data: TimeSeriesData) => void;
         "styleSettings": StyleSettingsMap | undefined;
@@ -397,6 +398,7 @@ declare namespace LocalJSX {
     interface IotTimeSeriesConnector {
         "annotations"?: Annotations;
         "assignDefaultColors"?: boolean | undefined;
+        "initialViewport"?: Viewport;
         "provider"?: Provider<TimeSeriesData[]>;
         "renderFunc"?: (data: TimeSeriesData) => void;
         "styleSettings"?: StyleSettingsMap | undefined;
